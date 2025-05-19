@@ -73,8 +73,8 @@ class DeepResearcher:
         report_plan = result.final_output_as(ReportPlan)
 
         if self.verbose:
-            num_sections = len(report_plan.report_outline)
-            message_log = '\n\n'.join(f"Section: {section.title}\nKey question: {section.key_question}" for section in report_plan.report_outline)
+            num_sections = len(report_plan.sections)
+            message_log = '\n\n'.join(f"Section: {section.title}\nKey question: {section.key_question}" for section in report_plan.sections)
             if report_plan.background_context:
                 message_log += f"\n\nThe following background context has been included for the report build:\n{report_plan.background_context}"
             else:
@@ -119,7 +119,7 @@ class DeepResearcher:
         self._log_message("=== Initializing Research Loops ===")
         # Run all research loops concurrently in a single gather call
         research_results = await asyncio.gather(
-            *(run_research_for_section(section) for section in report_plan.report_outline)
+            *(run_research_for_section(section) for section in report_plan.sections)
         )
         return research_results
 
@@ -143,7 +143,7 @@ class DeepResearcher:
         for i, section_draft in enumerate(section_drafts):
             report_draft.sections.append(
                 ReportDraftSection(
-                    section_title=report_plan.report_outline[i].title,
+                    section_title=report_plan.sections[i].title,
                     section_content=section_draft
                 )
             )
