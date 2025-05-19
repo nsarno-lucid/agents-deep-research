@@ -1,24 +1,16 @@
 """
-Agent used to synthesize a final report by iteratively writing each section of the report.
-Used to produce long reports given drafts of each section. Broadly aligned with the methodology described here:
+Agent used to write detailed sections of a philosophical article.
 
-
-The LongWriterAgent takes as input a string in the following format:
-===========================================================
-ORIGINAL QUERY: <original user query>
-
-CURRENT REPORT DRAFT: <current working draft of the report, all sections up to the current one being written>
-
-TITLE OF NEXT SECTION TO WRITE: <title of the next section of the report to be written>
-
-DRAFT OF NEXT SECTION: <draft of the next section of the report>
-===========================================================
+The LongWriterAgent takes as input:
+1. The original philosophical query
+2. The article title
+3. A ReportDraft object containing all sections written so far
+4. A first draft of the next section to be written
 
 The Agent then:
-1. Reads the current draft and the draft of the next section
-2. Writes the next section of the report
-3. Produces an updated draft of the new section to fit the flow of the report
-4. Returns the updated draft of the new section along with references/citations
+1. Writes a final draft of the next section with proper philosophical analysis
+2. Includes citations and references
+3. Returns a LongWriterOutput object
 """
 from .baseclass import ResearchAgent, ResearchRunner
 from ..llm_config import LLMConfig, model_supports_structured_output
@@ -31,38 +23,126 @@ import re
 
 
 class LongWriterOutput(BaseModel):
-    next_section_markdown: str = Field(description="The final draft of the next section in markdown format")
-    references: List[str] = Field(description="A list of URLs and their corresponding reference numbers for the section")
+    """Output from the Long Writer Agent"""
+    next_section_markdown: str = Field(description="The markdown content for the next section of the philosophical article")
+    references: List[str] = Field(description="List of references used in the section")
 
 
 INSTRUCTIONS = f"""
-You are an expert report writer tasked with iteratively writing each section of a report. 
+You are an expert philosophical writer tasked with writing detailed sections of a philosophical article. 
 Today's date is {datetime.now().strftime('%Y-%m-%d')}.
 You will be provided with:
-1. The original research query
-3. A final draft of the report containing the table of contents and all sections written up until this point (in the first iteration there will be no sections written yet)
-3. A first draft of the next section of the report to be written
+1. The original philosophical research query
+2. The article title
+3. A final draft of the article containing all sections written up until this point
+4. A first draft of the next section to be written
 
 OBJECTIVE:
-1. Write a final draft of the next section of the report with numbered citations in square brackets in the body of the report
-2. Produce a list of references to be appended to the end of the report
+1. Write a final draft of the next section that:
+   - Maintains philosophical rigor and accuracy
+   - Presents arguments clearly and logically
+   - Includes proper analysis and interpretation
+   - Connects with the broader philosophical context
+   - Uses appropriate philosophical terminology
+   - Demonstrates deep critical engagement
+   - Integrates modern context and applications
+   - Is suitable for modular app content
+2. Include proper citations and references
 
-CITATIONS/REFERENCES:
-The citations should be in numerical order, written in numbered square brackets in the body of the report.
-Separately, a list of all URLs and their corresponding reference numbers will be included at the end of the report.
-Follow the example below for formatting.
+Analytical Depth Requirements:
+- Go beyond surface-level descriptions to provide deep analysis
+- Critically engage with primary sources and interpretations
+- Identify and analyze philosophical tensions and contradictions
+- Evaluate the strengths and weaknesses of different positions
+- Synthesize ideas across different philosophical traditions
+- Develop original insights and connections
+- Challenge assumptions and explore implications
+- Consider counter-arguments and alternative viewpoints
+
+Philosophical Writing Guidelines:
+- Present arguments systematically and logically
+- Use philosophical terminology accurately
+- Include clear definitions of key terms
+- Provide examples and analogies for complex concepts
+- Present multiple perspectives when relevant
+- Maintain critical analysis throughout
+- Connect ideas to broader philosophical themes
+- Consider both historical and contemporary context
+
+Real-World Applications Guidelines:
+- Include diverse, modern examples from multiple fields:
+  * Technology and digital culture (social media, AI, digital ethics)
+  * Professional practices (medicine, law, business, engineering)
+  * Education and learning environments
+  * Contemporary social movements
+  * Environmental and global issues
+  * Personal development and well-being
+- Make examples relatable to modern audiences
+- Connect philosophical concepts to daily life
+- Include practical implications and use cases
+- Show how philosophical ideas solve real problems
+- Demonstrate relevance to current events and trends
+
+Comparative Analysis Guidelines:
+- Structure direct comparisons between philosophical positions
+- Include clear contrasts and critiques
+- Explain why certain positions are rejected or modified
+- Highlight unique aspects of the main philosophical view
+- Connect to contemporary philosophical debates
+- Show how different positions address similar problems
+- Analyze strengths and weaknesses of each approach
+- Consider historical and contemporary perspectives
+
+Ethical and Societal Analysis:
+- Examine moral and ethical implications
+- Consider political and social consequences
+- Analyze impact on individual and collective behavior
+- Evaluate implications for social justice
+- Discuss educational and cultural significance
+- Consider environmental and technological implications
+- Analyze economic and policy implications
+- Evaluate impact on human relationships and society
+- Address communication ethics and digital implications
+- Consider implications for professional ethics
+
+Citation Guidelines:
+- Include numbered citations in square brackets in the text
+- List all references at the end of the section
+- Follow this example format:
 
 LongWriterOutput(
-    next_section_markdown="The company specializes in IT consulting [1](https://example.com/first-source-url). It operates in the software services market which is expected to grow at 10% per year [2](https://example.com/second-source-url).",
-    references=["[1] https://example.com/first-source-url", "[2] https://example.com/second-source-url"]
+    next_section_markdown="The concept of the categorical imperative was first introduced by Kant in his Groundwork of the Metaphysics of Morals [1]. This idea has been interpreted in various ways by contemporary philosophers [2].",
+    references=["[1] https://example.com/kant-groundwork", "[2] https://example.com/contemporary-interpretations"]
 )
 
-GUIDELINES:
-- You can reformat and reorganize the flow of the content and headings within a section to flow logically, but DO NOT remove details that were included in the first draft
-- Only remove text from the first draft if it is already mentioned earlier in the report, or if it should be covered in a later section per the table of contents
-- Ensure the heading for the section matches the table of contents
-- Format the final output and references section as markdown
-- Do not include a title for the reference section, just a list of numbered references
+Section Structure Guidelines:
+- Begin with a clear introduction to the section's topic
+- Present key arguments and their development
+- Include relevant primary source analysis
+- Discuss interpretations and counter-arguments
+- Connect to broader philosophical themes
+- Conclude with implications and connections
+- Ensure deep analysis rather than mere summary
+- Develop original insights and connections
+- Challenge assumptions and explore implications
+- Make content suitable for app-based learning
+- Ensure the section can stand alone while maintaining coherence
+
+Content Guidelines:
+- You can reformat and reorganize the flow of the content to improve logical structure
+- DO NOT remove important philosophical content from the first draft
+- Only remove text if it:
+  * Is already mentioned earlier in the article
+  * Should be covered in a later section
+  * Is not relevant to the philosophical inquiry
+- Ensure the section heading matches the article outline
+- Format the output and references in markdown
+- Do not include a title for the references section
+- Aim for synthesis rather than mere summary
+- Develop original insights and connections
+- Challenge assumptions and explore implications
+- Make content suitable for app-based learning
+- Ensure each section can stand alone while maintaining overall coherence
 
 Only output JSON. Follow the JSON schema below. Do not output anything else. I will be parsing this with Pydantic so output valid JSON only:
 {LongWriterOutput.model_json_schema()}
