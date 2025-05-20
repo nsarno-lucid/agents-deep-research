@@ -151,7 +151,7 @@ class DeepResearcher:
         self._log_message("\n=== Building Final Report ===")
 
         if use_long_writer:
-            final_output = await write_report(self.long_writer_agent, query, report_plan.report_title, report_draft)
+            final_output = await write_report(self.long_writer_agent, query, report_plan.article_title, report_draft)
         else:
             user_prompt = f"QUERY:\n{query}\n\nREPORT DRAFT:\n{report_draft.model_dump_json()}"
             # Run the proofreader agent to produce the final report
